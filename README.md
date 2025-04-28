@@ -26,22 +26,41 @@ Token Refresh: Automatically refreshes expired tokens when needed
 
 Service Integration: Simplifies integration with REST APIs like Google Drive
 
-## Getting started
-
-TODO: List prerequisites and provide or point to information on how to
-start using the package.
-
 ## Usage
 
 TODO: Include short and useful examples for package users. Add longer examples
 to `/example` folder.
 
 ```dart
-const like = 'sample';
+	final account = OAuth2Account();
+		
+	var google = Google
+	(
+		redirectUri: "com.googleusercontent.apps.95012368401-j0gcpfork6j38q3p8sg37admdo086gbs:/oauth2redirect",
+		scopes: ['https://www.googleapis.com/auth/drive', "https://www.googleapis.com/auth/photoslibrary", "openid", "email"],
+		clientId: dotenv.env["MOBILE_CLIENT_ID"]!
+	);
+
+	if (Platform.isMacOS)
+	{
+		google = Google
+		(
+			redirectUri: "http://localhost:8713/pobpob",
+			scopes: ['https://www.googleapis.com/auth/drive', "https://www.googleapis.com/auth/photoslibrary", "openid", "email"],
+			clientId: dotenv.env["DESKTOP_CLIENT_ID"]!,
+			clientSecret:dotenv.env["DESKTOP_CLIENT_SECRET"]!,
+		);
+	}
+
+	account.addProvider("google", google);
+
+
+    var token = await account.newLogin("google");
+
+	//or
+
+	token = await account.loadAccount("google", "userName")
+
+	var client = await account.createClient(token);
+
 ```
-
-## Additional information
-
-TODO: Tell users more about the package: where to find more information, how to
-contribute to the package, how to file issues, what response they can expect
-from the package authors, and more.
