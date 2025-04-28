@@ -1,7 +1,7 @@
 abstract interface class OAuth2RestClient
 {
-  Future<RestResponse> get(String url, {Map<String, String>? queryParams});
-  Future<void> delete(String url, {Map<String, String>? queryParams});
+  Future<RestResponse> get(String url, {Map<String, String>? queryParams, Map<String, String>? headers});
+  Future<void> delete(String url, {Map<String, String>? queryParams, Map<String, String>? headers});
 }
 
 abstract interface class RestResponse

@@ -64,18 +64,16 @@ class _MyHomePageState extends State<MyHomePage>
 {
   final account = OAuth2Account();
 
+  
   @override
   void initState() 
   {
-    final apiId = dotenv.env['API_ID'];
-    final apiKey = dotenv.env['API_KEY'];  // 이렇게 가져옴
       
-	
     var google = Google
     (
       redirectUri: "com.googleusercontent.apps.95012368401-j0gcpfork6j38q3p8sg37admdo086gbs:/oauth2redirect",
       scopes: ['https://www.googleapis.com/auth/drive', "https://www.googleapis.com/auth/photoslibrary", "openid", "email"],
-      clientId: apiId!
+      clientId: dotenv.env["MOBILE_CLIENT_ID"]!
     );
 
     if (Platform.isMacOS)
@@ -84,11 +82,10 @@ class _MyHomePageState extends State<MyHomePage>
       (
         redirectUri: "http://localhost:8713/pobpob",
         scopes: ['https://www.googleapis.com/auth/drive', "https://www.googleapis.com/auth/photoslibrary", "openid", "email"],
-        clientId: apiId,
-        clientSecret:apiKey,
+        clientId: dotenv.env["DESKTOP_CLIENT_ID"]!,
+        clientSecret:dotenv.env["DESKTOP_CLIENT_SECRET"]!,
       );
     }
-
 
     account.addProvider("google", google);
 
@@ -129,13 +126,15 @@ class _MyHomePageState extends State<MyHomePage>
   void _incrementCounter() async 
   {
     var token = await account.any();
-    if (token == null)
+    token ??= await account.newLogin("google");
+    if (token?.timeToLogin ?? false)
     {
-      var token = await account.newAccount("google");
-      if (token == null) throw Exception("login frist");
+      token = await account.forceRelogin("google", token!.userName);
     }
-    
-    var client = DioRestClient(token!.accessToken, null);
+
+    if (token == null) throw Exception("login frist");
+    var client = await account.createClient(token);
+  
     var list = await listPhotos(client);
     for (var item in list)
     {

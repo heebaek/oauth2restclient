@@ -1,50 +1,61 @@
 import 'dart:convert';
 
-class OAuth2Token
+abstract interface class OAuth2Token 
 {
-  final String accessToken;
-  final String refreshToken;
-  final String userName;
-  final String iss;
-  final DateTime expiry;
-  final DateTime refreshTokenExpiry;
+  String get accessToken;
+  String get refreshToken;
+  String get userName;
+  String get iss;
+  bool get timeToRefresh;
+  bool get canRefresh;
+  bool get timeToLogin;
+  String toJsonString();
+  OAuth2Token mergeToken(OAuth2Token newToken);
+}
 
-  bool get timeToRefresh
+class OAuth2TokenF implements OAuth2Token 
+{
+  final Map<String, dynamic> json;
+  Map<String, dynamic>? _idToken;
+
+  Map<String, dynamic>? get idToken
   {
-    var now = DateTime.now().toUtc();
-    
-    return now.isAfter(expiry.subtract(Duration(minutes: 5)));
+    return _idToken ??= _tryDecodeIdToken(json["id_token"]);
+  }
+  
+  OAuth2TokenF(this.json)
+  {
+    _parseToken(json);
   }
 
-  bool get canRefresh
+  void _parseToken(Map<String, dynamic> json)
   {
-    if (refreshToken.isEmpty) return false;
-    var now = DateTime.now().toUtc();
-    return now.isBefore(refreshTokenExpiry.subtract(Duration(minutes: 5)));
+    if (!json.containsKey("expiry"))
+    {
+      if (json.containsKey("expires_in"))
+      {
+        json["expiry"] = DateTime.now().toUtc().add(Duration(seconds: json["expires_in"])).subtract(Duration(minutes: 5)).toIso8601String();
+      }
+      else
+      {
+        json["expiry"] = "9999-12-31T23:59:59.999Z";
+      }
+    }
+
+    if (!json.containsKey("refresh_token_expiry"))
+    {
+      if (json.containsKey("refresh_token_expires_in"))
+      {
+        json["refresh_token_expiry"] = DateTime.now().toUtc().add(Duration(seconds: json["refresh_token_expires_in"])).subtract(Duration(minutes: 5)).toIso8601String();
+      }
+      else
+      {
+        json["refresh_token_expiry"] = "9999-12-31T23:59:59.999Z";
+      }
+    }
   }
 
-  OAuth2Token({
-    required this.accessToken,
-    required this.refreshToken,
-    required this.userName,
-    required this.iss,
-    required this.expiry,
-    required this.refreshTokenExpiry,
-  });
-
-  factory OAuth2Token.fromJsonString(String jsonResponse) 
-  {
-    final jsonMap = jsonDecode(jsonResponse);
-    return OAuth2Token.fromJson(jsonMap);
-  }
-
-  String toJsonString()
-  {
-    var json = toJson();
-    return jsonEncode(json);
-  }
-
-  static Map<String, dynamic> _tryDecodeIdToken(String? idToken)
+  Map<String, dynamic> _tryDecodeIdToken(String? idToken)
 	{
     if (idToken?.isEmpty ?? true) return {};
      
@@ -56,69 +67,74 @@ class OAuth2Token
 		return jsonDecode(payload);
 	}
 
-  static void _parseToken(Map<String, dynamic> json)
+  DateTime? _expiry;
+  DateTime get expiry
   {
-    if (!json.containsKey("expiry"))
-    {
-      if (json.containsKey("expires_in"))
-      {
-        json["expiry"] = DateTime.now().toUtc()
-					.add(Duration(seconds: json["expires_in"]))
-					.toIso8601String();
-      }
-      else
-      {
-        json["expiry"] = "9999-12-31T23:59:59.999Z";
-      }
-    }
-		
-    if (!json.containsKey("refresh_token_expiry"))
-    {
-      if (json.containsKey("refresh_token_expires_in"))
-      {
-        json["refresh_token_expiry"] = DateTime.now().toUtc()
-					.add(Duration(seconds: json["refresh_token_expires_in"]))
-					.toIso8601String();
-      }
-      else
-      {
-        json["refresh_token_expiry"] = "9999-12-31T23:59:59.999Z";
-      }
-    }
-
-    if (!json.containsKey("userName") || !json.containsKey("iss"))
-    {
-      var idToken = _tryDecodeIdToken(json["id_token"]);
-      json["userName"] = idToken["email"] ?? idToken["sub"] ?? "";
-      json["iss"] = idToken["iss"] ?? "";      
-    }
-   
-    if (!json.containsKey("refresh_token"))
-    {
-      json["refresh_token"] = "";
-    }
+    return _expiry ??= DateTime.parse(json["expiry"]);
   }
 
-  factory OAuth2Token.fromJson(Map<String, dynamic> json) {
-    _parseToken(json);
-    return OAuth2Token(
-      accessToken: json['access_token'],
-      refreshToken: json['refresh_token'],
-      userName: json['userName'],
-      iss: json['iss'],
-      expiry: DateTime.parse(json['expiry']),
-      refreshTokenExpiry: DateTime.parse(json['refresh_token_expiry']),
-    );
+  DateTime? _refreshTokenExpiry;
+  DateTime get refreshTokenExpiry
+  {
+    return _refreshTokenExpiry ??= DateTime.parse(json["refresh_token_expiry"]);
   }
 
-  Map<String, dynamic> toJson() {
-    return {
-      'access_token': accessToken,
-      'refresh_token': refreshToken,
-      'userName': userName,
-      'iss': iss,
-      'expiry': expiry.toIso8601String(),
-      'refresh_token_expiry': refreshTokenExpiry.toIso8601String(),
+  @override
+  bool get timeToRefresh
+  {
+    var now = DateTime.now().toUtc();
+    return now.isAfter(expiry);
+  }
+
+  @override
+  bool get canRefresh
+  {
+    if (refreshToken.isEmpty) return false;
+    var now = DateTime.now().toUtc();
+    return now.isBefore(refreshTokenExpiry.subtract(Duration(minutes: 5)));
+  }
+
+  @override
+  bool get timeToLogin
+  {
+    return timeToRefresh && !canRefresh;
+  }
+
+  factory OAuth2TokenF.fromJsonString(String jsonResponse) 
+  {
+    final jsonMap = jsonDecode(jsonResponse);
+    return OAuth2TokenF(jsonMap);
+  }
+
+  @override
+  String toJsonString()
+  {
+    return jsonEncode(json);
+  }
+
+  @override
+  String get accessToken => json["access_token"] ?? "";
+
+  @override
+  String get refreshToken => json["refresh_token"] ?? "";
+  
+  @override
+  String get iss => idToken?["iss"] ?? "";
+  
+  @override
+  String get userName => idToken?["email"] ?? idToken?["sub"] ?? "";
+  
+  @override
+  OAuth2Token mergeToken(OAuth2Token newToken) 
+  {
+    var jsonString = newToken.toJsonString();
+    var newJson = jsonDecode(jsonString);
+    Map<String, dynamic> mergedToken = 
+    {
+      ...json,  // 기존 값 유지
+      ...newJson   // 새로운 값 덮어쓰기
     };
+
+    return OAuth2TokenF(mergedToken);
   }
 }

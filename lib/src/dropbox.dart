@@ -1,7 +1,7 @@
 import 'oauth2_provider.dart';
 
-class Google extends OAuth2Provider {
-  Google({
+class Dropbox extends OAuth2ProviderF {
+  Dropbox({
     required super.clientId,
     super.clientSecret,
     required super.redirectUri,

@@ -1,7 +1,7 @@
 name: oauth2restclient
-description: "A new Flutter package project."
+description: "OAuth2 login and rest client"
 version: 0.0.1
-#homepage:
+repository: https://github.com/heebaek/oauth2restclient
 
 environment:
   sdk: ^3.7.0
@@ -15,9 +15,8 @@ dependencies:
   url_launcher: ^6.3.1
   app_links: ^6.4.0
   http: ^1.3.0
-  shared_preferences: ^2.5.2
-  dio: ^5.8.0+1
-
+  shared_preferences: ^2.5.3
+  
 dev_dependencies:
   flutter_test:
     sdk: flutter

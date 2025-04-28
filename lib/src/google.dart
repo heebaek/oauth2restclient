@@ -1,6 +1,6 @@
 import 'oauth2_provider.dart';
 
-class Google extends OAuth2Provider {
+class Google extends OAuth2ProviderF {
   Google({
     required super.clientId,
     super.clientSecret,
