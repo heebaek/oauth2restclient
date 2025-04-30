@@ -6,7 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 
-import 'oauth2_token.dart';
+import '../token/oauth2_token.dart';
 
 HttpServer? _server;
 

@@ -2,12 +2,13 @@
 
 import 'dart:io';
 
-import 'package:oauth2restclient/src/oauth2_rest_client.dart';
+import 'package:flutter/foundation.dart';
+import 'package:oauth2restclient/src/rest_client/oauth2_rest_client.dart';
 
-import 'http_rest_client.dart';
-import 'oauth2_provider.dart';
-import 'oauth2_token.dart';
-import 'oauth2_token_storage.dart';
+import 'provider/oauth2_provider.dart';
+import 'rest_client/oauth2_rest_client_f.dart';
+import 'token/oauth2_token.dart';
+import 'token/oauth2_token_storage.dart';
 
 class OAuth2Account 
 {
@@ -122,10 +123,18 @@ class OAuth2Account
 
   Future<OAuth2RestClient> createClient(OAuth2Token token) async
   {
-    var client = OAuthRestClientF(accessToken:token.accessToken, refreshToken: () async
+    var client = OAuth2RestClientF(accessToken:token.accessToken, refreshToken: () async
     {
-      var newToken = await refreshToken(token.iss, token.userName);      
-      return newToken?.accessToken;
+      try
+      {
+        var newToken = await refreshToken(token.iss, token.userName);      
+        return newToken?.accessToken;
+      }
+      catch (e)
+      {
+        debugPrint(e.toString());
+        return null;
+      }
     });
     return client;
   }

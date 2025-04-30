@@ -105,19 +105,13 @@ class _MyHomePageState extends State<MyHomePage>
         queryParams["pageToken"] = nextPageToken;
       }
       
-      var response = await client.get("https://photoslibrary.googleapis.com/v1/mediaItems", queryParams:queryParams);
-        
-      if (response.statusCode != 200) 
-      {
-        throw Exception("🚨 미디어 목록 가져오기 실패: ${response.body}");
-      }
-
-      final data = jsonDecode(response.body);
-      final List<dynamic> mediaItemsJson = data["mediaItems"] ?? [];
+      var json = await client.getJson("https://photoslibrary.googleapis.com/v1/mediaItems", queryParams:queryParams);
+      
+      final List<dynamic> mediaItemsJson = json["mediaItems"] ?? [];
       items.addAll(mediaItemsJson);
       if (items.isNotEmpty) break;
 
-      nextPageToken = data["nextPageToken"];
+      nextPageToken = json["nextPageToken"];
     }
     while (nextPageToken != null);
     return items;
