@@ -12,6 +12,7 @@ HttpServer? _server;
 
 abstract interface class OAuth2Provider 
 {
+  String get name;
   Future<OAuth2Token?> login();
   Future<String?> exchangeCode(String? code);
   Future<OAuth2Token?> refreshToken(
@@ -27,8 +28,12 @@ class OAuth2ProviderF implements OAuth2Provider
   final List<String> scopes;
   final String authEndpoint;
   final String tokenEndpoint;
+  
+  @override
+  final String name;
 
   OAuth2ProviderF({
+    required this.name,
     required this.clientId,
     this.clientSecret,
     required this.redirectUri,

@@ -9,13 +9,13 @@ import 'oauth2_rest_body.dart';
 import 'oauth2_rest_client.dart';
 import 'oauth2_rest_response.dart';
 
-class OAuth2RestClientF implements OAuth2RestClient {
+class HttpOAuth2RestClient implements OAuth2RestClient {
   final _client = HttpClient();
 
   String? accessToken;
   final Future<String?> Function()? refreshToken;
 
-  OAuth2RestClientF({this.accessToken, this.refreshToken});
+  HttpOAuth2RestClient({this.accessToken, this.refreshToken});
 
   Map<String, String> _combineHeader(
     Map<String, String>? original,

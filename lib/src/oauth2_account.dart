@@ -6,12 +6,14 @@ import 'package:flutter/foundation.dart';
 import 'package:oauth2restclient/src/rest_client/oauth2_rest_client.dart';
 
 import 'provider/oauth2_provider.dart';
-import 'rest_client/oauth2_rest_client_f.dart';
+import 'rest_client/http_oauth2_rest_client.dart';
 import 'token/oauth2_token.dart';
 import 'token/oauth2_token_storage.dart';
 
 class OAuth2Account 
 {
+  final String? appPrefix;
+
   final Map<String, OAuth2Provider> _providers = {};
   
   void addProvider(String name, OAuth2Provider provider) 
@@ -33,7 +35,7 @@ class OAuth2Account
 
   late final OAuth2TokenStorage _tokenStorage;
 
-  OAuth2Account({OAuth2TokenStorage? tokenStorage})
+  OAuth2Account({OAuth2TokenStorage? tokenStorage, this.appPrefix})
   {
     if (Platform.isAndroid || Platform.isIOS)
     {
@@ -47,7 +49,7 @@ class OAuth2Account
 
   static const tokenPrefix = "OAUTH2ACCOUNT103"; // ✅ OAuth 키를 구별하기 위한 접두사 추가
 
-  String keyFor(String service, String userName) => "$tokenPrefix-$service-$userName";
+  String keyFor(String service, String userName) => "$appPrefix-$tokenPrefix-$service-$userName";
 
   Future<void> saveAccount(String service, String userName, OAuth2Token token) async
   {
@@ -104,30 +106,27 @@ class OAuth2Account
     return token;
   }
 
-  Future<OAuth2Token?> forceRelogin(String service, String userName) async
+  Future<OAuth2Token?> forceRelogin(OAuth2Token expiredToken) async
   {
-    var provider = getProvider(service);
-    if (provider == null) throw Exception("can't find provider '$service'");
+    var provider = getProvider(expiredToken.iss);
+    if (provider == null) throw Exception("can't find provider for '{$expiredToken.iss}'");
 
     var token = await provider.login();
     if (token != null)
     {
-      if (token.iss.contains(service) && token.userName == userName)
-      {
-        await saveAccount(service, token.userName, token);
-        return token;
-      }        
+      await saveAccount(provider.name, token.userName, token);
+      return token;
     }
     return null;
   }
 
   Future<OAuth2RestClient> createClient(OAuth2Token token) async
   {
-    var client = OAuth2RestClientF(accessToken:token.accessToken, refreshToken: () async
+    var client = HttpOAuth2RestClient(accessToken:token.accessToken, refreshToken: () async
     {
       try
       {
-        var newToken = await refreshToken(token.iss, token.userName);      
+        var newToken = await refreshToken(token);
         return newToken?.accessToken;
       }
       catch (e)
@@ -141,9 +140,10 @@ class OAuth2Account
 
   final Map<String, Future<OAuth2Token?>> _pendingRefreshes = {};
 
-  Future<OAuth2Token?> refreshToken(String service, String userName) async 
+  Future<OAuth2Token?> refreshToken(OAuth2Token expiredToken) async 
   {
-    final String refreshKey = "$service:$userName";
+    //, String service, String userName
+    final String refreshKey = "${expiredToken.iss}:${expiredToken.userName}";
     
     // 이미 진행 중인 갱신이 있는지 확인
     if (_pendingRefreshes.containsKey(refreshKey)) 
@@ -152,7 +152,7 @@ class OAuth2Account
     }
     
     // 새로운 갱신 작업 생성
-    final refreshOperation = _doRefreshToken(service, userName);
+    final refreshOperation = _doRefreshToken(expiredToken);
     
     // 진행 중인 작업으로 등록
     _pendingRefreshes[refreshKey] = refreshOperation;
@@ -166,20 +166,21 @@ class OAuth2Account
     return refreshOperation;
   }
   
-  Future<OAuth2Token?> _doRefreshToken(String service, String userName) async
+  Future<OAuth2Token?> _doRefreshToken(OAuth2Token token) async
   {
-    var savedToken = await loadAccount(service, userName);
-    if (savedToken == null) return null;
-
-    var provider = getProvider(service);
+    var provider = getProvider(token.iss);
     if (provider == null) return null;
+
+    //String service, String userName
+    var savedToken = await loadAccount(provider.name, token.userName);
+    if (savedToken == null) return null;
 
     var newToken = await provider.refreshToken(savedToken.refreshToken);
     if (newToken == null) return null;
 
     var mergedToken = savedToken.mergeToken(newToken);
 
-    await saveAccount(service, userName, mergedToken);
+    await saveAccount(provider.name, mergedToken.userName, mergedToken);
     return mergedToken;
   }
 }

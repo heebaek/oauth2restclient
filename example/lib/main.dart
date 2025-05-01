@@ -62,8 +62,7 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> 
 {
-  final account = OAuth2Account();
-
+  final account = OAuth2Account(appPrefix: "oauth2restclientexample");
   
   @override
   void initState() 
@@ -123,7 +122,7 @@ class _MyHomePageState extends State<MyHomePage>
     token ??= await account.newLogin("google");
     if (token?.timeToLogin ?? false)
     {
-      token = await account.forceRelogin("google", token!.userName);
+      token = await account.forceRelogin(token!);
     }
 
     if (token == null) throw Exception("login frist");
