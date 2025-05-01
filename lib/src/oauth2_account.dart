@@ -16,9 +16,9 @@ class OAuth2Account
 
   final Map<String, OAuth2Provider> _providers = {};
   
-  void addProvider(String name, OAuth2Provider provider) 
+  void addProvider(OAuth2Provider provider) 
   {
-    _providers[name] = provider;
+    _providers[provider.name] = provider;
   }
   
   OAuth2Provider? getProvider(String nameOrIss) 
@@ -104,6 +104,16 @@ class OAuth2Account
       await saveAccount(service, token.userName, token);
     }
     return token;
+  }
+
+  Future<OAuth2Token?> tryAutoLogin(String service, String userName) async 
+  {
+    var token = await loadAccount(service, userName);
+    if (token?.timeToLogin ?? false)
+    {
+      token = await forceRelogin(token!);
+    }
+    return token; 
   }
 
   Future<OAuth2Token?> forceRelogin(OAuth2Token expiredToken) async

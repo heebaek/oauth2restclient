@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
+
 import '../exception/oauth2_exception.dart';
 import '../oauth2_cancel_token.dart';
 import 'http_method.dart';
@@ -120,8 +122,18 @@ class HttpOAuth2RestClient implements OAuth2RestClient {
 
   Future<String> _consumeString(OAuth2RestResponse response) async {
     try {
-      response.ensureSuccess();
-      return await response.readAsString();
+      if (kDebugMode) 
+      {
+        var str = await response.readAsString();
+        debugPrint(str);
+        response.ensureSuccess();
+        return str;
+      }
+      else
+      {
+        response.ensureSuccess();
+        return await response.readAsString();
+      }
     } finally {
       response.dispose();
     }
