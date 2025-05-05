@@ -5,3 +5,7 @@
 ## 0.0.2
 
 * huge refactoring
+
+## 0.0.3
+
+* add name to provider
