@@ -9,3 +9,7 @@
 ## 0.0.3
 
 * add name to provider
+
+## 0.0.4
+
+* dart format to all source files
