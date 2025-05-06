@@ -105,8 +105,9 @@ class OAuth2Account {
 
   Future<OAuth2Token?> forceRelogin(OAuth2Token expiredToken) async {
     var provider = getProvider(expiredToken.iss);
-    if (provider == null)
+    if (provider == null) {
       throw Exception("can't find provider for '{$expiredToken.iss}'");
+    }
 
     var token = await provider.login();
     if (token != null) {

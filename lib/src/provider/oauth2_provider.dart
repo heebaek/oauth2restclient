@@ -180,8 +180,9 @@ class OAuth2ProviderF implements OAuth2Provider {
       },
     );
 
-    if (response.statusCode == 200)
+    if (response.statusCode == 200) {
       return OAuth2TokenF.fromJsonString(response.body);
+    }
 
     return null;
   }

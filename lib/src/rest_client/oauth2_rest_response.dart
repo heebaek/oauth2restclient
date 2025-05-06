@@ -2,8 +2,8 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import '../oauth2_cancel_token.dart';
 import '../exception/oauth2_exception.dart';
+import '../oauth2_cancel_token.dart';
 
 abstract interface class OAuth2RestResponse {
   int? get statusCode;
@@ -36,8 +36,9 @@ class OAuth2RestResponseF implements OAuth2RestResponse {
 
   @override
   void ensureSuccess() {
-    if (!isSuccess)
+    if (!isSuccess) {
       throw HttpException('HTTP request failed, statusCode=$statusCode');
+    }
   }
 
   void _ensureNotDisposed() {
