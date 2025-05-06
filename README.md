@@ -82,8 +82,7 @@ void main() async {
   var client = await account.createClient(token);
 
   // Use the client to make authenticated requests
-  final response = await client.get(Uri.parse('https://www.googleapis.com/drive/v3/files'));
-  print(response.body);
+  final response = await client.getJson('https://www.googleapis.com/drive/v3/files');
 }
 ```
 
