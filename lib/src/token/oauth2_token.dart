@@ -1,7 +1,6 @@
 import 'dart:convert';
 
-abstract interface class OAuth2Token 
-{
+abstract interface class OAuth2Token {
   String get accessToken;
   String get refreshToken;
   String get userName;
@@ -13,102 +12,94 @@ abstract interface class OAuth2Token
   OAuth2Token mergeToken(OAuth2Token newToken);
 }
 
-class OAuth2TokenF implements OAuth2Token 
-{
+class OAuth2TokenF implements OAuth2Token {
   final Map<String, dynamic> json;
   Map<String, dynamic>? _idToken;
 
-  Map<String, dynamic>? get idToken
-  {
+  Map<String, dynamic>? get idToken {
     return _idToken ??= _tryDecodeIdToken(json["id_token"]);
   }
-  
-  OAuth2TokenF(this.json)
-  {
+
+  OAuth2TokenF(this.json) {
     _parseToken(json);
   }
 
-  void _parseToken(Map<String, dynamic> json)
-  {
-    if (!json.containsKey("expiry"))
-    {
-      if (json.containsKey("expires_in"))
-      {
-        json["expiry"] = DateTime.now().toUtc().add(Duration(seconds: json["expires_in"])).subtract(Duration(minutes: 5)).toIso8601String();
-      }
-      else
-      {
+  void _parseToken(Map<String, dynamic> json) {
+    if (!json.containsKey("expiry")) {
+      if (json.containsKey("expires_in")) {
+        json["expiry"] =
+            DateTime.now()
+                .toUtc()
+                .add(Duration(seconds: json["expires_in"]))
+                .subtract(Duration(minutes: 5))
+                .toIso8601String();
+      } else {
         json["expiry"] = "9999-12-31T23:59:59.999Z";
       }
     }
 
-    if (!json.containsKey("refresh_token_expiry"))
-    {
-      if (json.containsKey("refresh_token_expires_in"))
-      {
-        json["refresh_token_expiry"] = DateTime.now().toUtc().add(Duration(seconds: json["refresh_token_expires_in"])).subtract(Duration(minutes: 5)).toIso8601String();
-      }
-      else
-      {
+    if (!json.containsKey("refresh_token_expiry")) {
+      if (json.containsKey("refresh_token_expires_in")) {
+        json["refresh_token_expiry"] =
+            DateTime.now()
+                .toUtc()
+                .add(Duration(seconds: json["refresh_token_expires_in"]))
+                .subtract(Duration(minutes: 5))
+                .toIso8601String();
+      } else {
         json["refresh_token_expiry"] = "9999-12-31T23:59:59.999Z";
       }
     }
   }
 
-  Map<String, dynamic> _tryDecodeIdToken(String? idToken)
-	{
+  Map<String, dynamic> _tryDecodeIdToken(String? idToken) {
     if (idToken?.isEmpty ?? true) return {};
-     
+
     final parts = idToken!.split('.');
-		if (parts.length != 3) {
-			throw Exception("🚨 ID Token 형식 오류");
-		}
-		final payload = utf8.decode(base64Url.decode(base64Url.normalize(parts[1])));
-		return jsonDecode(payload);
-	}
+    if (parts.length != 3) {
+      throw Exception("🚨 ID Token 형식 오류");
+    }
+    final payload = utf8.decode(
+      base64Url.decode(base64Url.normalize(parts[1])),
+    );
+    return jsonDecode(payload);
+  }
 
   DateTime? _expiry;
-  DateTime get expiry
-  {
+  DateTime get expiry {
     return _expiry ??= DateTime.parse(json["expiry"]);
   }
 
   DateTime? _refreshTokenExpiry;
-  DateTime get refreshTokenExpiry
-  {
+  DateTime get refreshTokenExpiry {
     return _refreshTokenExpiry ??= DateTime.parse(json["refresh_token_expiry"]);
   }
 
   @override
-  bool get timeToRefresh
-  {
+  bool get timeToRefresh {
     var now = DateTime.now().toUtc();
     return now.isAfter(expiry);
   }
 
   @override
-  bool get canRefresh
-  {
+  bool get canRefresh {
     if (refreshToken.isEmpty) return false;
     var now = DateTime.now().toUtc();
     return now.isBefore(refreshTokenExpiry.subtract(Duration(minutes: 5)));
   }
 
   @override
-  bool get timeToLogin
-  {
+  bool get timeToLogin {
     return timeToRefresh && !canRefresh;
   }
 
-  factory OAuth2TokenF.fromJsonString(String jsonResponse) 
-  {
+  factory OAuth2TokenF.fromJsonString(String jsonResponse) {
     final jsonMap = jsonDecode(jsonResponse);
     return OAuth2TokenF(jsonMap);
   }
 
   @override
-  String toJsonString()
-  {
+  String toJsonString() {
     return jsonEncode(json);
   }
 
@@ -117,22 +108,20 @@ class OAuth2TokenF implements OAuth2Token
 
   @override
   String get refreshToken => json["refresh_token"] ?? "";
-  
+
   @override
   String get iss => idToken?["iss"] ?? "";
-  
+
   @override
   String get userName => idToken?["email"] ?? idToken?["sub"] ?? "";
-  
+
   @override
-  OAuth2Token mergeToken(OAuth2Token newToken) 
-  {
+  OAuth2Token mergeToken(OAuth2Token newToken) {
     var jsonString = newToken.toJsonString();
     var newJson = jsonDecode(jsonString);
-    Map<String, dynamic> mergedToken = 
-    {
-      ...json,  // 기존 값 유지
-      ...newJson   // 새로운 값 덮어쓰기
+    Map<String, dynamic> mergedToken = {
+      ...json, // 기존 값 유지
+      ...newJson, // 새로운 값 덮어쓰기
     };
 
     return OAuth2TokenF(mergedToken);

@@ -34,15 +34,11 @@ class HttpOAuth2RestClient implements OAuth2RestClient {
     return result;
   }
 
-  Uri _buildUri(String url,  Map<String, String>? queryParams)
-  {
+  Uri _buildUri(String url, Map<String, String>? queryParams) {
     final parsed = Uri.parse(url);
     if (queryParams?.isEmpty ?? true) return parsed;
 
-    final mergedQuery = {
-      ...parsed.queryParameters,
-      ...?queryParams,
-    };
+    final mergedQuery = {...parsed.queryParameters, ...?queryParams};
     return parsed.replace(queryParameters: mergedQuery);
   }
 
@@ -122,15 +118,12 @@ class HttpOAuth2RestClient implements OAuth2RestClient {
 
   Future<String> _consumeString(OAuth2RestResponse response) async {
     try {
-      if (kDebugMode) 
-      {
+      if (kDebugMode) {
         var str = await response.readAsString();
         debugPrint(str);
         response.ensureSuccess();
         return str;
-      }
-      else
-      {
+      } else {
         response.ensureSuccess();
         return await response.readAsString();
       }

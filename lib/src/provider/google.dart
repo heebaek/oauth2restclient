@@ -7,7 +7,7 @@ class Google extends OAuth2ProviderF {
     required super.redirectUri,
     required super.scopes,
   }) : super(
-        name:"google",
+         name: "google",
          authEndpoint: "https://accounts.google.com/o/oauth2/auth",
          tokenEndpoint: "https://oauth2.googleapis.com/token",
        );

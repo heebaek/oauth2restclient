@@ -2,8 +2,7 @@ import 'dart:convert';
 
 import 'oauth2_rest_body.dart';
 
-class OAuth2FormData
-{
+class OAuth2FormData {
   final String? name;
   final OAuth2RestBody body;
   final String? filename; // 파일이면 필요
@@ -11,24 +10,20 @@ class OAuth2FormData
 
   String? _header;
 
-  String buildHeader({bool contentTypeOnly = false})
-  {
+  String buildHeader({bool contentTypeOnly = false}) {
     return _header ??= _buildHeader(contentTypeOnly);
   }
 
-  String _buildHeader(bool contentTypeOnly)
-  {
+  String _buildHeader(bool contentTypeOnly) {
     final sb = StringBuffer();
-    if (!contentTypeOnly)
-    {
+    if (!contentTypeOnly) {
       sb.write('Content-Disposition: form-data; name="$name"');
-      if (filename != null) 
-      {
+      if (filename != null) {
         sb.write('; filename="$filename"');
       }
       sb.write('\r\n');
     }
-    
+
     final type = contentType ?? body.contentType ?? 'application/octet-stream';
     sb.write('Content-Type: $type\r\n');
     return sb.toString();
@@ -42,31 +37,29 @@ class OAuth2FormData
   });
 }
 
-class OAuth2MultiBody implements OAuth2RestBody 
-{
+class OAuth2MultiBody implements OAuth2RestBody {
   final List<OAuth2FormData> parts;
   final String boundary;
   final String type; //form-data or related
 
-  OAuth2MultiBody({
-    required this.parts,
-    required this.type,
-    String? boundary,
-  }) : boundary = boundary ?? _generateBoundary();
+  OAuth2MultiBody({required this.parts, required this.type, String? boundary})
+    : boundary = boundary ?? _generateBoundary();
 
-  static String _generateBoundary() => 'boundary-${DateTime.now().millisecondsSinceEpoch}';
+  static String _generateBoundary() =>
+      'boundary-${DateTime.now().millisecondsSinceEpoch}';
 
   @override
   String? get contentType => 'multipart/$type; boundary=$boundary';
 
-  String buildHeader(OAuth2FormData part)
-  {
+  String buildHeader(OAuth2FormData part) {
     return part.buildHeader(contentTypeOnly: type == "related");
   }
 
   @override
   int? get contentLength {
-    if (parts.any((p) => p.body.contentLength == null || p.body.contentLength! < 0)) {
+    if (parts.any(
+      (p) => p.body.contentLength == null || p.body.contentLength! < 0,
+    )) {
       return null;
     }
 
@@ -99,14 +92,12 @@ class OAuth2MultiBody implements OAuth2RestBody
     yield utf8.encode('--$boundary--\r\n');
   }
 
-  factory OAuth2MultiBody.formData(List<OAuth2FormData> parts)
-  {
-    return OAuth2MultiBody(parts:parts, type:"form-data");
+  factory OAuth2MultiBody.formData(List<OAuth2FormData> parts) {
+    return OAuth2MultiBody(parts: parts, type: "form-data");
   }
 
-  factory OAuth2MultiBody.related(OAuth2JsonBody meta, OAuth2FileBody file)
-  {
-    var parts = [OAuth2FormData(body:meta), OAuth2FormData(body:file)];
-    return OAuth2MultiBody(parts:parts, type:"related");
+  factory OAuth2MultiBody.related(OAuth2JsonBody meta, OAuth2FileBody file) {
+    var parts = [OAuth2FormData(body: meta), OAuth2FormData(body: file)];
+    return OAuth2MultiBody(parts: parts, type: "related");
   }
 }

@@ -10,25 +10,21 @@ import '../token/oauth2_token.dart';
 
 HttpServer? _server;
 
-abstract interface class OAuth2Provider 
-{
+abstract interface class OAuth2Provider {
   String get name;
   Future<OAuth2Token?> login();
   Future<String?> exchangeCode(String? code);
-  Future<OAuth2Token?> refreshToken(
-    String? refreshToken,
-  );
+  Future<OAuth2Token?> refreshToken(String? refreshToken);
 }
 
-class OAuth2ProviderF implements OAuth2Provider 
-{
+class OAuth2ProviderF implements OAuth2Provider {
   final String clientId;
   final String? clientSecret;
   final String redirectUri;
   final List<String> scopes;
   final String authEndpoint;
   final String tokenEndpoint;
-  
+
   @override
   final String name;
 
@@ -39,11 +35,10 @@ class OAuth2ProviderF implements OAuth2Provider
     required this.redirectUri,
     required this.scopes,
     required this.authEndpoint,
-    required this.tokenEndpoint
+    required this.tokenEndpoint,
   });
 
-  String get _authUrl
-  {
+  String get _authUrl {
     return "$authEndpoint"
         "?client_id=$clientId"
         "&redirect_uri=$redirectUri"
@@ -52,7 +47,7 @@ class OAuth2ProviderF implements OAuth2Provider
         "&access_type=offline"
         "&prompt=consent";
   }
-  
+
   @override
   Future<OAuth2Token?> login() async {
     if (Platform.isAndroid || Platform.isIOS) return loginFromMobile();
@@ -162,8 +157,7 @@ class OAuth2ProviderF implements OAuth2Provider
         "code": code,
         "grant_type": "authorization_code",
         "redirect_uri": redirectUri,
-        if (clientSecret != null)
-          "client_secret": clientSecret,
+        if (clientSecret != null) "client_secret": clientSecret,
       },
     );
 
@@ -172,9 +166,7 @@ class OAuth2ProviderF implements OAuth2Provider
   }
 
   @override
-  Future<OAuth2Token?> refreshToken(
-    String? refreshToken,
-  ) async {
+  Future<OAuth2Token?> refreshToken(String? refreshToken) async {
     if (refreshToken?.isEmpty ?? true) return null;
 
     final response = await http.post(
@@ -188,7 +180,8 @@ class OAuth2ProviderF implements OAuth2Provider
       },
     );
 
-    if (response.statusCode == 200) return OAuth2TokenF.fromJsonString(response.body);
+    if (response.statusCode == 200)
+      return OAuth2TokenF.fromJsonString(response.body);
 
     return null;
   }

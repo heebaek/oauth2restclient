@@ -1,29 +1,25 @@
 import 'dart:convert';
 
-abstract interface class OAuth2RestBody 
-{
+abstract interface class OAuth2RestBody {
   List<int> toBytes();
   Stream<List<int>> toStream();
   String? get contentType;
   int? get contentLength; // 전체 길이(optional)
 }
 
-class OAuth2TextBody implements OAuth2RestBody 
-{
+class OAuth2TextBody implements OAuth2RestBody {
   final String text;
   List<int>? _encoded;
 
   @override
-  List<int> toBytes()
-  {
-    return _encoded ??= utf8.encode(text);    
+  List<int> toBytes() {
+    return _encoded ??= utf8.encode(text);
   }
 
   OAuth2TextBody(this.text);
 
   @override
-  Stream<List<int>> toStream() async* 
-  {
+  Stream<List<int>> toStream() async* {
     final bytes = toBytes();
     yield bytes; // 텍스트를 스트림으로
   }
@@ -35,22 +31,19 @@ class OAuth2TextBody implements OAuth2RestBody
   int get contentLength => toBytes().length;
 }
 
-class OAuth2JsonBody implements OAuth2RestBody 
-{
+class OAuth2JsonBody implements OAuth2RestBody {
   final Map<String, dynamic> jsonMap;
   List<int>? _encoded;
 
   @override
-  List<int> toBytes()
-  {
-    return _encoded ??= utf8.encode(jsonEncode(jsonMap));    
+  List<int> toBytes() {
+    return _encoded ??= utf8.encode(jsonEncode(jsonMap));
   }
 
   OAuth2JsonBody(this.jsonMap);
 
-    @override
-  Stream<List<int>> toStream() async* 
-  {
+  @override
+  Stream<List<int>> toStream() async* {
     final bytes = toBytes();
     yield bytes; // 텍스트를 스트림으로
   }
@@ -62,18 +55,23 @@ class OAuth2JsonBody implements OAuth2RestBody
   int get contentLength => toBytes().length;
 }
 
-class OAuth2FileBody implements OAuth2RestBody
-{
+class OAuth2FileBody implements OAuth2RestBody {
   final Stream<List<int>> fileStream;
   final String? _contentType;
   final int _contentLength;
 
-  OAuth2FileBody(this.fileStream, {String? contentType, required int contentLength}) : _contentType = contentType, _contentLength = contentLength;
+  OAuth2FileBody(
+    this.fileStream, {
+    String? contentType,
+    required int contentLength,
+  }) : _contentType = contentType,
+       _contentLength = contentLength;
 
   @override
-  List<int> toBytes() 
-  {
-    throw UnimplementedError('OAuth2FileBody는 toBytes()를 지원하지 않습니다. toStream()을 사용하세요.');
+  List<int> toBytes() {
+    throw UnimplementedError(
+      'OAuth2FileBody는 toBytes()를 지원하지 않습니다. toStream()을 사용하세요.',
+    );
   }
 
   @override

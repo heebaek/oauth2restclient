@@ -42,7 +42,6 @@ class MyApp extends StatelessWidget {
 }
 
 class MyHomePage extends StatefulWidget {
-  
   const MyHomePage({super.key, required this.title});
 
   // This widget is the home page of your application. It is stateful, meaning
@@ -60,29 +59,34 @@ class MyHomePage extends StatefulWidget {
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> 
-{
+class _MyHomePageState extends State<MyHomePage> {
   final account = OAuth2Account(appPrefix: "oauth2restclientexample");
-  
+
   @override
-  void initState() 
-  {
-      
-    var google = Google
-    (
-      redirectUri: "com.googleusercontent.apps.95012368401-j0gcpfork6j38q3p8sg37admdo086gbs:/oauth2redirect",
-      scopes: ['https://www.googleapis.com/auth/drive', "https://www.googleapis.com/auth/photoslibrary", "openid", "email"],
-      clientId: dotenv.env["MOBILE_CLIENT_ID"]!
+  void initState() {
+    var google = Google(
+      redirectUri:
+          "com.googleusercontent.apps.95012368401-j0gcpfork6j38q3p8sg37admdo086gbs:/oauth2redirect",
+      scopes: [
+        'https://www.googleapis.com/auth/drive',
+        "https://www.googleapis.com/auth/photoslibrary",
+        "openid",
+        "email",
+      ],
+      clientId: dotenv.env["MOBILE_CLIENT_ID"]!,
     );
 
-    if (Platform.isMacOS)
-    {
-      google = Google
-      (
+    if (Platform.isMacOS) {
+      google = Google(
         redirectUri: "http://localhost:8713/pobpob",
-        scopes: ['https://www.googleapis.com/auth/drive', "https://www.googleapis.com/auth/photoslibrary", "openid", "email"],
+        scopes: [
+          'https://www.googleapis.com/auth/drive',
+          "https://www.googleapis.com/auth/photoslibrary",
+          "openid",
+          "email",
+        ],
         clientId: dotenv.env["DESKTOP_CLIENT_ID"]!,
-        clientSecret:dotenv.env["DESKTOP_CLIENT_SECRET"]!,
+        clientSecret: dotenv.env["DESKTOP_CLIENT_SECRET"]!,
       );
     }
 
@@ -90,47 +94,47 @@ class _MyHomePageState extends State<MyHomePage>
 
     super.initState();
   }
-  
+
   int _counter = 0;
-  
-  Future<List<dynamic>> listPhotos(OAuth2RestClient client, {int pageSize = 1, String? nextPageToken}) async 
-  {
+
+  Future<List<dynamic>> listPhotos(
+    OAuth2RestClient client, {
+    int pageSize = 1,
+    String? nextPageToken,
+  }) async {
     List<dynamic> items = [];
-    do
-    {
+    do {
       Map<String, String> queryParams = {"pageSize": pageSize.toString()};
-      if (nextPageToken != null)
-      {
+      if (nextPageToken != null) {
         queryParams["pageToken"] = nextPageToken;
       }
-      
-      var json = await client.getJson("https://photoslibrary.googleapis.com/v1/mediaItems", queryParams:queryParams);
-      
+
+      var json = await client.getJson(
+        "https://photoslibrary.googleapis.com/v1/mediaItems",
+        queryParams: queryParams,
+      );
+
       final List<dynamic> mediaItemsJson = json["mediaItems"] ?? [];
       items.addAll(mediaItemsJson);
       if (items.isNotEmpty) break;
 
       nextPageToken = json["nextPageToken"];
-    }
-    while (nextPageToken != null);
+    } while (nextPageToken != null);
     return items;
   }
-  
-  void _incrementCounter() async 
-  {
+
+  void _incrementCounter() async {
     var token = await account.any();
     token ??= await account.newLogin("google");
-    if (token?.timeToLogin ?? false)
-    {
+    if (token?.timeToLogin ?? false) {
       token = await account.forceRelogin(token!);
     }
 
     if (token == null) throw Exception("login frist");
     var client = await account.createClient(token);
-  
+
     var list = await listPhotos(client);
-    for (var item in list)
-    {
+    for (var item in list) {
       debugPrint(jsonEncode(item));
     }
 

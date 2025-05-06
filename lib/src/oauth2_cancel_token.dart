@@ -1,7 +1,6 @@
 import 'dart:async';
 
-abstract interface class OAuth2CancelToken 
-{
+abstract interface class OAuth2CancelToken {
   /// 토큰이 취소되었는지 여부
   bool get isCancelled;
 
@@ -16,8 +15,7 @@ abstract interface class OAuth2CancelToken
   void cancel(String? reason);
 }
 
-class OAuth2CancelTokenF implements OAuth2CancelToken 
-{
+class OAuth2CancelTokenF implements OAuth2CancelToken {
   bool _isCancelled = false;
   final Completer<void> _cancelCompleter = Completer<void>();
 
@@ -28,25 +26,20 @@ class OAuth2CancelTokenF implements OAuth2CancelToken
   Future<void> get cancelFuture => _cancelCompleter.future;
 
   @override
-  void throwIfCancelled() 
-  {
-    if (_isCancelled) 
-    {
+  void throwIfCancelled() {
+    if (_isCancelled) {
       throw Exception("Operation was cancelled");
     }
   }
 
   @override
-  void cancel(String? reason) 
-  {
-    if (!_isCancelled) 
-    {
+  void cancel(String? reason) {
+    if (!_isCancelled) {
       _reason = reason;
       _isCancelled = true;
       _cancelCompleter.complete();
     }
   }
-  
 
   String? _reason;
   @override

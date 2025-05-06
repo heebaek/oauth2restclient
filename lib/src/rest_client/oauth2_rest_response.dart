@@ -5,36 +5,39 @@ import 'dart:io';
 import '../oauth2_cancel_token.dart';
 import '../exception/oauth2_exception.dart';
 
-abstract interface class OAuth2RestResponse
-{
+abstract interface class OAuth2RestResponse {
   int? get statusCode;
   String? headerValue(String header);
   void ensureSuccess();
   bool get isSuccess;
-  
+
   Stream<List<int>> get bodyStream;
   Future<String> readAsString();
   Future<List<int>> readAsBytes();
 
-  Future<void> copyTo(StreamSink<List<int>> sink, {void Function(int uploadedBytes, int? totalBytes)? onProgress, OAuth2CancelToken? token});
+  Future<void> copyTo(
+    StreamSink<List<int>> sink, {
+    void Function(int uploadedBytes, int? totalBytes)? onProgress,
+    OAuth2CancelToken? token,
+  });
 
   Future<void> dispose();
 }
 
-class OAuth2RestResponseF implements OAuth2RestResponse 
-{
+class OAuth2RestResponseF implements OAuth2RestResponse {
   final HttpClientResponse _response;
   bool _disposed = false;
 
   OAuth2RestResponseF(this._response);
 
   @override
-  bool get isSuccess => _response.statusCode >= 200 && _response.statusCode < 300;
-  
+  bool get isSuccess =>
+      _response.statusCode >= 200 && _response.statusCode < 300;
+
   @override
-  void ensureSuccess()
-  {
-    if (!isSuccess) throw HttpException('HTTP request failed, statusCode=$statusCode');
+  void ensureSuccess() {
+    if (!isSuccess)
+      throw HttpException('HTTP request failed, statusCode=$statusCode');
   }
 
   void _ensureNotDisposed() {
@@ -73,29 +76,28 @@ class OAuth2RestResponseF implements OAuth2RestResponse
     return body;
   }
 
-  
   @override
-  Future<void> copyTo(StreamSink<List<int>> sink, {void Function(int uploadedBytes, int? totalBytes)? onProgress, OAuth2CancelToken? token}) async
-  {
+  Future<void> copyTo(
+    StreamSink<List<int>> sink, {
+    void Function(int uploadedBytes, int? totalBytes)? onProgress,
+    OAuth2CancelToken? token,
+  }) async {
     _ensureNotDisposed();
-    if (onProgress != null) 
-    {
+    if (onProgress != null) {
       int downloaded = 0;
       int? totalLength = int.tryParse(headerValue("Content-Length") ?? "");
-      await for (final chunk in bodyStream) 
-      {
-        if (token?.isCancelled ?? false) 
-        {
-          throw OAuth2ExceptionF.canceled(message: token?.reason ?? 'Cancelled by user');
+      await for (final chunk in bodyStream) {
+        if (token?.isCancelled ?? false) {
+          throw OAuth2ExceptionF.canceled(
+            message: token?.reason ?? 'Cancelled by user',
+          );
         }
         sink.add(chunk);
-    
+
         downloaded += chunk.length;
         onProgress.call(downloaded, totalLength);
       }
-    }
-    else
-    {
+    } else {
       await bodyStream.pipe(sink);
     }
     await dispose();
@@ -112,8 +114,7 @@ class OAuth2RestResponseF implements OAuth2RestResponse
       _disposed = true;
     }
   }
-  
+
   @override
   String? headerValue(String header) => _response.headers.value(header);
-
 }
