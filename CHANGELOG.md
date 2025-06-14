@@ -13,3 +13,7 @@
 ## 0.0.4
 
 * dart format to all source files
+
+## 0.0.5
+
+* export dropbox provider

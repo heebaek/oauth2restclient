@@ -1,5 +1,6 @@
 export 'src/oauth2_account.dart';
 export 'src/oauth2_cancel_token.dart';
+export 'src/provider/dropbox.dart';
 export 'src/provider/google.dart';
 export 'src/rest_client/oauth2_multipart.dart';
 export 'src/rest_client/oauth2_rest_body.dart';
