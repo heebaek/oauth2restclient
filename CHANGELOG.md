@@ -17,3 +17,9 @@
 ## 0.0.5
 
 * export dropbox provider
+
+## 0.0.6
+
+* make scopes optional in OAuth2Provider
+* add dropbox login
+* pkce

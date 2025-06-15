@@ -5,7 +5,7 @@ class Dropbox extends OAuth2ProviderF {
     required super.clientId,
     super.clientSecret,
     required super.redirectUri,
-    required super.scopes,
+    super.scopes,
   }) : super(
          name: "dropbox",
          authEndpoint: "https://www.dropbox.com/oauth2/authorize",

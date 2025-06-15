@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 
 import '../token/oauth2_token.dart';
+import 'pkce.dart';
 
 HttpServer? _server;
 
@@ -21,9 +22,11 @@ class OAuth2ProviderF implements OAuth2Provider {
   final String clientId;
   final String? clientSecret;
   final String redirectUri;
-  final List<String> scopes;
+  final List<String>? scopes;
   final String authEndpoint;
   final String tokenEndpoint;
+
+  String? codeVerifier;
 
   @override
   final String name;
@@ -33,19 +36,25 @@ class OAuth2ProviderF implements OAuth2Provider {
     required this.clientId,
     this.clientSecret,
     required this.redirectUri,
-    required this.scopes,
+    this.scopes,
     required this.authEndpoint,
     required this.tokenEndpoint,
   });
 
   String get _authUrl {
+    codeVerifier ??= PKCE.generateCodeVerifier();
+    var cc = PKCE.generateCodeChallenge(codeVerifier!);
+
     return "$authEndpoint"
         "?client_id=$clientId"
         "&redirect_uri=$redirectUri"
         "&response_type=code"
-        "&scope=${scopes.join('%20')}"
+        "${scopes != null ? "&scope=${scopes!.join('%20')}" : ""}"
         "&access_type=offline"
-        "&prompt=consent";
+        "&token_access_type=offline"
+        "&prompt=consent"
+        "&code_challenge_method=S256"
+        "&code_challenge=$cc";
   }
 
   @override
@@ -158,6 +167,7 @@ class OAuth2ProviderF implements OAuth2Provider {
         "grant_type": "authorization_code",
         "redirect_uri": redirectUri,
         if (clientSecret != null) "client_secret": clientSecret,
+        if (codeVerifier != null) "code_verifier": codeVerifier,
       },
     );
 

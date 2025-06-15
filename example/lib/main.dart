@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -61,9 +60,24 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   final account = OAuth2Account(appPrefix: "oauth2restclientexample");
+  final service = "google";
 
   @override
   void initState() {
+    var dropbox = Dropbox(
+      clientId: dotenv.env["DROPBOX_CLIENT_ID"]!,
+      redirectUri: "aircomix://${dotenv.env["DROPBOX_CLIENT_ID"]!}/",
+      scopes: [
+        "account_info.read",
+        "files.content.read",
+        "files.content.write",
+        "files.metadata.write",
+        "files.metadata.read",
+        "openid",
+        "email",
+      ],
+    );
+
     var google = Google(
       redirectUri:
           "com.googleusercontent.apps.95012368401-j0gcpfork6j38q3p8sg37admdo086gbs:/oauth2redirect",
@@ -88,14 +102,44 @@ class _MyHomePageState extends State<MyHomePage> {
         clientId: dotenv.env["DESKTOP_CLIENT_ID"]!,
         clientSecret: dotenv.env["DESKTOP_CLIENT_SECRET"]!,
       );
+
+      dropbox = Dropbox(
+        clientId: dotenv.env["DROPBOX_CLIENT_ID"]!,
+        redirectUri: "http://localhost:8713/pobpob",
+        scopes: [
+          "account_info.read",
+          "files.content.read",
+          "files.content.write",
+          "files.metadata.write",
+          "files.metadata.read",
+          "openid",
+          "email",
+        ],
+      );
     }
 
     account.addProvider(google);
+    account.addProvider(dropbox);
 
     super.initState();
   }
 
   int _counter = 0;
+
+  Future<String> getEmail(OAuth2RestClient client, String service) async {
+    if (service == "dropbox") {
+      var response = await client.postJson(
+        "https://api.dropboxapi.com/2/users/get_current_account",
+      );
+      return response["email"] as String;
+    }
+
+    //else google
+    var response = await client.getJson(
+      "https://www.googleapis.com/oauth2/v3/userinfo",
+    );
+    return response["email"] as String;
+  }
 
   Future<List<dynamic>> listPhotos(
     OAuth2RestClient client, {
@@ -124,8 +168,8 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _incrementCounter() async {
-    var token = await account.any();
-    token ??= await account.newLogin("google");
+    var token = await account.any(service: service);
+    token ??= await account.newLogin(service);
     if (token?.timeToLogin ?? false) {
       token = await account.forceRelogin(token!);
     }
@@ -133,10 +177,15 @@ class _MyHomePageState extends State<MyHomePage> {
     if (token == null) throw Exception("login frist");
     var client = await account.createClient(token);
 
+    var email = await getEmail(client, service);
+    debugPrint(email);
+
+    /*
     var list = await listPhotos(client);
     for (var item in list) {
       debugPrint(jsonEncode(item));
     }
+	*/
 
     setState(() {
       // This call to setState tells the Flutter framework that something has

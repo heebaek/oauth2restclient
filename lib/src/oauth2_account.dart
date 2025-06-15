@@ -9,7 +9,7 @@ import 'token/oauth2_token.dart';
 import 'token/oauth2_token_storage.dart';
 
 class OAuth2Account {
-  final String? appPrefix;
+  final String appPrefix;
 
   final Map<String, OAuth2Provider> _providers = {};
 
@@ -28,7 +28,7 @@ class OAuth2Account {
 
   late final OAuth2TokenStorage _tokenStorage;
 
-  OAuth2Account({OAuth2TokenStorage? tokenStorage, this.appPrefix}) {
+  OAuth2Account({OAuth2TokenStorage? tokenStorage, required this.appPrefix}) {
     if (Platform.isAndroid || Platform.isIOS) {
       _tokenStorage = tokenStorage ?? OAuth2TokenStorageSecure();
     } else {
@@ -36,7 +36,7 @@ class OAuth2Account {
     }
   }
 
-  static const tokenPrefix = "OAUTH2ACCOUNT103"; // ✅ OAuth 키를 구별하기 위한 접두사 추가
+  static const tokenPrefix = "OAUTH2ACCOUNT107"; // ✅ OAuth 키를 구별하기 위한 접두사 추가
 
   String keyFor(String service, String userName) =>
       "$appPrefix-$tokenPrefix-$service-$userName";
@@ -52,12 +52,13 @@ class OAuth2Account {
   }
 
   Future<List<(String, String)>> allAccounts({String service = ""}) async {
-    final all = await _tokenStorage.loadAll(keyPrefix: tokenPrefix);
+    var prefix = keyFor(service, "");
+    final all = await _tokenStorage.loadAll(keyPrefix: prefix);
 
     return all.keys
         .map((key) {
           final parts = key.split("-");
-          return (parts[1], parts[2]); // (serviceName, account)
+          return (parts[2], parts[3]); // (serviceName, account)
         })
         .where(
           (tuple) => service.isEmpty || tuple.$1.contains(service),
