@@ -23,3 +23,7 @@
 * make scopes optional in OAuth2Provider
 * add dropbox login
 * pkce
+
+## 0.0.7
+
+* remove debugPrint from _consumeString function
