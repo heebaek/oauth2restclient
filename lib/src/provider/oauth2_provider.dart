@@ -84,7 +84,24 @@ class OAuth2ProviderF implements OAuth2Provider {
           final response = await exchangeCode(code);
 
           if (response == null) {
-            request.response.statusCode = HttpStatus.notFound;
+            request.response.headers.contentType = ContentType.html;
+            request.response.write('''
+              <!DOCTYPE html>
+              <html>
+              <head>
+                <title>로그인 실패</title>
+                <style>
+                  body { font-family: Arial, sans-serif; text-align: center; padding-top: 50px; }
+                  h1 { color: #e74c3c; }
+                  p { font-size: 16px; }
+                </style>
+              </head>
+              <body>
+                <h1>로그인 실패</h1>
+                <p>인증에 실패했습니다. 이 창을 닫고 앱으로 돌아가세요.</p>
+              </body>
+              </html>
+            ''');
             await request.response.close();
           } else {
             // 성공 메시지를 브라우저에 표시

@@ -81,6 +81,47 @@ abstract interface class OAuth2RestClient {
     Map<String, String>? headers,
   });
 
+  Future<OAuth2RestResponse> put(
+    String url, {
+    OAuth2RestBody? body,
+    Map<String, String>? queryParams,
+    Map<String, String>? headers,
+    OAuth2ProgressCallback? onProgress,
+    OAuth2CancelToken? token,
+  });
+  Future<String> putString(
+    String url, {
+    OAuth2RestBody? body,
+    Map<String, String>? queryParams,
+    Map<String, String>? headers,
+    OAuth2ProgressCallback? onProgress,
+    OAuth2CancelToken? token,
+  });
+  Future<Map<String, dynamic>> putJson(
+    String url, {
+    OAuth2RestBody? body,
+    Map<String, String>? queryParams,
+    Map<String, String>? headers,
+    OAuth2ProgressCallback? onProgress,
+    OAuth2CancelToken? token,
+  });
+  Future<List<Map<String, dynamic>>> putJsonList(
+    String url, {
+    OAuth2RestBody? body,
+    Map<String, String>? queryParams,
+    Map<String, String>? headers,
+    OAuth2ProgressCallback? onProgress,
+    OAuth2CancelToken? token,
+  });
+  Future<Stream<List<int>>> putStream(
+    String url, {
+    OAuth2RestBody? body,
+    Map<String, String>? queryParams,
+    Map<String, String>? headers,
+    OAuth2ProgressCallback? onProgress,
+    OAuth2CancelToken? token,
+  });
+
   Future<OAuth2RestResponse> patch(
     String url, {
     OAuth2RestBody? body,

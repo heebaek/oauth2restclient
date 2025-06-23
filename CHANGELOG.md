@@ -27,3 +27,8 @@
 ## 0.0.7
 
 * remove debugPrint from _consumeString function
+
+## 0.0.8
+
+* add PUT HTTP method support for OneDrive
+* add OneDriver as provider

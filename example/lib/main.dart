@@ -60,10 +60,12 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   final account = OAuth2Account(appPrefix: "oauth2restclientexample");
-  final service = "google";
+  final service = "onedrive";
 
   @override
   void initState() {
+    super.initState();
+
     var dropbox = Dropbox(
       clientId: dotenv.env["DROPBOX_CLIENT_ID"]!,
       redirectUri: "aircomix://${dotenv.env["DROPBOX_CLIENT_ID"]!}/",
@@ -73,8 +75,6 @@ class _MyHomePageState extends State<MyHomePage> {
         "files.content.write",
         "files.metadata.write",
         "files.metadata.read",
-        "openid",
-        "email",
       ],
     );
 
@@ -88,6 +88,19 @@ class _MyHomePageState extends State<MyHomePage> {
         "email",
       ],
       clientId: dotenv.env["MOBILE_CLIENT_ID"]!,
+    );
+
+    var onedrive = OneDrive(
+      clientId: dotenv.env["ONEDRIVE_CLIENT_ID"]!,
+      redirectUri: "aircomix://${dotenv.env["ONEDRIVE_CLIENT_ID"]!}/",
+      scopes: [
+        "User.Read",
+        "Files.ReadWrite.All",
+        "Files.Read.All",
+        "openid",
+        "email",
+        "offline_access",
+      ],
     );
 
     if (Platform.isMacOS) {
@@ -112,16 +125,26 @@ class _MyHomePageState extends State<MyHomePage> {
           "files.content.write",
           "files.metadata.write",
           "files.metadata.read",
+        ],
+      );
+
+      onedrive = OneDrive(
+        clientId: dotenv.env["ONEDRIVE_CLIENT_ID"]!,
+        redirectUri: "http://localhost:8713/pobpob",
+        scopes: [
+          "User.Read",
+          "Files.ReadWrite.All",
+          "Files.Read.All",
           "openid",
           "email",
+          "offline_access",
         ],
       );
     }
 
     account.addProvider(google);
     account.addProvider(dropbox);
-
-    super.initState();
+    account.addProvider(onedrive);
   }
 
   int _counter = 0;
@@ -134,48 +157,33 @@ class _MyHomePageState extends State<MyHomePage> {
       return response["email"] as String;
     }
 
-    //else google
+    if (service == "onedrive") {
+      var response = await client.getJson(
+        "https://graph.microsoft.com/v1.0/me",
+      );
+      return response["mail"] as String;
+    }
+
+    // Google
     var response = await client.getJson(
       "https://www.googleapis.com/oauth2/v3/userinfo",
     );
     return response["email"] as String;
   }
 
-  Future<List<dynamic>> listPhotos(
-    OAuth2RestClient client, {
-    int pageSize = 1,
-    String? nextPageToken,
-  }) async {
-    List<dynamic> items = [];
-    do {
-      Map<String, String> queryParams = {"pageSize": pageSize.toString()};
-      if (nextPageToken != null) {
-        queryParams["pageToken"] = nextPageToken;
-      }
-
-      var json = await client.getJson(
-        "https://photoslibrary.googleapis.com/v1/mediaItems",
-        queryParams: queryParams,
-      );
-
-      final List<dynamic> mediaItemsJson = json["mediaItems"] ?? [];
-      items.addAll(mediaItemsJson);
-      if (items.isNotEmpty) break;
-
-      nextPageToken = json["nextPageToken"];
-    } while (nextPageToken != null);
-    return items;
-  }
-
   void _incrementCounter() async {
-    var token = await account.any(service: service);
-    token ??= await account.newLogin(service);
+    //var token = await account.any(service: service);
+    //token ??= await account.newLogin(service);
+    var token = await account.newLogin(service);
     if (token?.timeToLogin ?? false) {
       token = await account.forceRelogin(token!);
     }
 
-    if (token == null) throw Exception("login frist");
+    if (token == null) throw Exception("login first");
     var client = await account.createClient(token);
+
+    // PUT 메서드 테스트
+    //await testPutMethods(client);
 
     var email = await getEmail(client, service);
     debugPrint(email);
@@ -195,6 +203,44 @@ class _MyHomePageState extends State<MyHomePage> {
       // called again, and so nothing would appear to happen.
       _counter++;
     });
+  }
+
+  Future<void> testPutMethods(OAuth2RestClient client) async {
+    try {
+      debugPrint("=== PUT 메서드 테스트 시작 ===");
+
+      // 1. putJson 테스트
+      var putResponse = await client.putJson(
+        "https://httpbin.org/put",
+        body: OAuth2JsonBody({"test": "put", "message": "Hello PUT"}),
+        headers: {"X-Test-Header": "put-test"},
+      );
+      debugPrint("PUT JSON 응답: ${putResponse.toString()}");
+
+      // 2. putString 테스트
+      var putStringResponse = await client.putString(
+        "https://httpbin.org/put",
+        body: OAuth2TextBody("Hello PUT from string"),
+        headers: {"Content-Type": "text/plain"},
+      );
+      debugPrint("PUT String 응답: $putStringResponse");
+
+      // 3. putJsonList 테스트
+      var putListResponse = await client.putJsonList(
+        "https://httpbin.org/put",
+        body: OAuth2JsonBody({
+          "items": [
+            {"item": 1},
+            {"item": 2},
+          ],
+        }),
+      );
+      debugPrint("PUT JSON List 응답: ${putListResponse.toString()}");
+
+      debugPrint("=== PUT 메서드 테스트 완료 ===");
+    } catch (e) {
+      debugPrint("PUT 테스트 에러: ${e.toString()}");
+    }
   }
 
   @override

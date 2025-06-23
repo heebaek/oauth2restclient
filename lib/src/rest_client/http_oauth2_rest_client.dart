@@ -203,6 +203,104 @@ class HttpOAuth2RestClient implements OAuth2RestClient {
     }
   }
 
+  @override
+  Future<OAuth2RestResponse> put(
+    String url, {
+    OAuth2RestBody? body,
+    Map<String, String>? queryParams,
+    Map<String, String>? headers,
+    OAuth2ProgressCallback? onProgress,
+    OAuth2CancelToken? token,
+  }) {
+    return _request(
+      HttpMethod.put,
+      url,
+      body: body,
+      queryParams: queryParams,
+      headers: headers,
+      onProgress: onProgress,
+      token: token,
+      retryCount: 0,
+    );
+  }
+
+  @override
+  Future<String> putString(
+    String url, {
+    OAuth2RestBody? body,
+    Map<String, String>? queryParams,
+    Map<String, String>? headers,
+    OAuth2ProgressCallback? onProgress,
+    OAuth2CancelToken? token,
+  }) async {
+    var response = await put(
+      url,
+      body: body,
+      queryParams: queryParams,
+      headers: headers,
+      onProgress: onProgress,
+      token: token,
+    );
+    return _consumeString(response);
+  }
+
+  @override
+  Future<Map<String, dynamic>> putJson(
+    String url, {
+    OAuth2RestBody? body,
+    Map<String, String>? queryParams,
+    Map<String, String>? headers,
+    OAuth2ProgressCallback? onProgress,
+    OAuth2CancelToken? token,
+  }) async {
+    var jsonString = await putString(
+      url,
+      body: body,
+      queryParams: queryParams,
+      headers: headers,
+    );
+    var json = jsonDecode(jsonString);
+    return json as Map<String, dynamic>;
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> putJsonList(
+    String url, {
+    OAuth2RestBody? body,
+    Map<String, String>? queryParams,
+    Map<String, String>? headers,
+    OAuth2ProgressCallback? onProgress,
+    OAuth2CancelToken? token,
+  }) async {
+    var jsonString = await putString(
+      url,
+      body: body,
+      queryParams: queryParams,
+      headers: headers,
+    );
+    var json = jsonDecode(jsonString);
+    return json as List<Map<String, dynamic>>;
+  }
+
+  @override
+  Future<Stream<List<int>>> putStream(
+    String url, {
+    OAuth2RestBody? body,
+    Map<String, String>? queryParams,
+    Map<String, String>? headers,
+    OAuth2ProgressCallback? onProgress,
+    OAuth2CancelToken? token,
+  }) async {
+    var response = await put(
+      url,
+      body: body,
+      queryParams: queryParams,
+      headers: headers,
+    );
+    response.ensureSuccess();
+    return response.bodyStream;
+  }
+
   Stream<List<int>> _wrapUploadStream(
     Stream<List<int>> original,
     int? totalLength, {
