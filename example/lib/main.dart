@@ -60,7 +60,7 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   final account = OAuth2Account(appPrefix: "oauth2restclientexample");
-  final service = "onedrive";
+  final service = "microsoft";
 
   @override
   void initState() {
@@ -90,7 +90,7 @@ class _MyHomePageState extends State<MyHomePage> {
       clientId: dotenv.env["MOBILE_CLIENT_ID"]!,
     );
 
-    var onedrive = OneDrive(
+    var ms = Microsoft(
       clientId: dotenv.env["ONEDRIVE_CLIENT_ID"]!,
       redirectUri: "aircomix://${dotenv.env["ONEDRIVE_CLIENT_ID"]!}/",
       scopes: [
@@ -128,7 +128,7 @@ class _MyHomePageState extends State<MyHomePage> {
         ],
       );
 
-      onedrive = OneDrive(
+      ms = Microsoft(
         clientId: dotenv.env["ONEDRIVE_CLIENT_ID"]!,
         redirectUri: "http://localhost:8713/pobpob",
         scopes: [
@@ -144,7 +144,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
     account.addProvider(google);
     account.addProvider(dropbox);
-    account.addProvider(onedrive);
+    account.addProvider(ms);
   }
 
   int _counter = 0;
@@ -157,7 +157,7 @@ class _MyHomePageState extends State<MyHomePage> {
       return response["email"] as String;
     }
 
-    if (service == "onedrive") {
+    if (service == "microsoft") {
       var response = await client.getJson(
         "https://graph.microsoft.com/v1.0/me",
       );
@@ -188,13 +188,6 @@ class _MyHomePageState extends State<MyHomePage> {
     var email = await getEmail(client, service);
     debugPrint(email);
 
-    /*
-    var list = await listPhotos(client);
-    for (var item in list) {
-      debugPrint(jsonEncode(item));
-    }
-	*/
-
     setState(() {
       // This call to setState tells the Flutter framework that something has
       // changed in this State, which causes it to rerun the build method below
@@ -203,44 +196,6 @@ class _MyHomePageState extends State<MyHomePage> {
       // called again, and so nothing would appear to happen.
       _counter++;
     });
-  }
-
-  Future<void> testPutMethods(OAuth2RestClient client) async {
-    try {
-      debugPrint("=== PUT 메서드 테스트 시작 ===");
-
-      // 1. putJson 테스트
-      var putResponse = await client.putJson(
-        "https://httpbin.org/put",
-        body: OAuth2JsonBody({"test": "put", "message": "Hello PUT"}),
-        headers: {"X-Test-Header": "put-test"},
-      );
-      debugPrint("PUT JSON 응답: ${putResponse.toString()}");
-
-      // 2. putString 테스트
-      var putStringResponse = await client.putString(
-        "https://httpbin.org/put",
-        body: OAuth2TextBody("Hello PUT from string"),
-        headers: {"Content-Type": "text/plain"},
-      );
-      debugPrint("PUT String 응답: $putStringResponse");
-
-      // 3. putJsonList 테스트
-      var putListResponse = await client.putJsonList(
-        "https://httpbin.org/put",
-        body: OAuth2JsonBody({
-          "items": [
-            {"item": 1},
-            {"item": 2},
-          ],
-        }),
-      );
-      debugPrint("PUT JSON List 응답: ${putListResponse.toString()}");
-
-      debugPrint("=== PUT 메서드 테스트 완료 ===");
-    } catch (e) {
-      debugPrint("PUT 테스트 에러: ${e.toString()}");
-    }
   }
 
   @override
